@@ -1,0 +1,23 @@
+[Unit]
+Description=MediaMTX RTSP Server
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=geyser
+Group=geyser
+WorkingDirectory=/home/geyser
+ExecStart=/home/geyser/mediamtx
+Restart=always
+RestartSec=2
+KillMode=process
+TimeoutStopSec=5
+
+# Hardening (safe defaults)
+NoNewPrivileges=true
+PrivateTmp=true
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,19 @@
+[Unit]
+Description=Raspberry Pi Camera RTSP Stream
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/cam-rtsp.sh
+Restart=always
+RestartSec=2
+KillMode=control-group
+TimeoutStopSec=5
+
+# Optional but recommended
+Nice=-5
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
