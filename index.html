@@ -10,12 +10,17 @@
             width: 100%;
             height: 100%;
             background: black;
+            overflow: hidden;
         }
-        #player {
+        video {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100vw;
             height: 100vh;
             object-fit: contain;
             background: black;
+            display: none;
         }
         #nextBtn {
             position: fixed;
@@ -31,45 +36,46 @@
 <body>
 
 <button id="nextBtn">Next Stream</button>
-
-<video id="player" autoplay muted controls playsinline></video>
+<div id="playerContainer"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 <script>
     const streams = [
         '/cam/tvpi/index.m3u8',
         '/cam/carpi/index.m3u8'
-        
+        // add more stream URLs here
     ];
 
+    const container = document.getElementById('playerContainer');
     let current = 0;
-    const video = document.getElementById('player');
-    const btn = document.getElementById('nextBtn');
-    let hls;
+    const players = [];
 
-    function loadStream(index) {
-        if (hls) {
-            hls.destroy();
-            hls = null;
-        }
+    streams.forEach((src, i) => {
+        const video = document.createElement('video');
+        video.autoplay = true;
+        video.muted = true;
+        video.playsInline = true;
+        video.controls = false;
+        video.style.display = i === 0 ? 'block' : 'none';
 
-        const src = streams[index];
+        container.appendChild(video);
 
         if (Hls.isSupported()) {
-            hls = new Hls();
+            const hls = new Hls({ lowLatencyMode: true });
             hls.loadSource(src);
             hls.attachMedia(video);
-        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            players.push({ video, hls });
+        } else {
             video.src = src;
+            players.push({ video, hls: null });
         }
-    }
+    });
 
-    btn.onclick = () => {
-        current = (current + 1) % streams.length;
-        loadStream(current);
+    document.getElementById('nextBtn').onclick = () => {
+        players[current].video.style.display = 'none';
+        current = (current + 1) % players.length;
+        players[current].video.style.display = 'block';
     };
-
-    loadStream(current);
 </script>
 
 </body>
