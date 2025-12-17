@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Multi-Cam Viewer</title>
+</head>
+<body>
+    <h1>TVPi Cam</h1>
+    <video id="tvpi" controls autoplay muted width="480" height="360" playsinline>
+        <source src="/cam/tvpi/index.m3u8" type="application/x-mpegURL">
+        Your browser does not support HLS.
+    </video>
+
+    <h1>CarPi Cam</h1>
+    <video id="carpi" controls autoplay muted width="480" height="360" playsinline>
+        <source src="/cam/carpi/index.m3u8" type="application/x-mpegURL">
+        Your browser does not support HLS.
+    </video>
+
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script>
+        if(Hls.isSupported()) {
+            var tvpi = document.getElementById('tvpi');
+            var hls1 = new Hls();
+            hls1.loadSource('/cam/tvpi/index.m3u8');
+            hls1.attachMedia(tvpi);
+
+            var carpi = document.getElementById('carpi');
+            var hls2 = new Hls();
+            hls2.loadSource('/cam/carpi/index.m3u8');
+            hls2.attachMedia(carpi);
+        }
+    </script>
+</body>
+</html>
