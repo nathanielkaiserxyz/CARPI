@@ -24,15 +24,14 @@
         }
         #nextBtn {
             position: fixed;
-            top: 12px;
-            right: 12px;
+            top: 2%;
+            right: 2%;
             z-index: 10;
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background-color: rgba(255, 255, 255, 0.8);
-            border: none;
-            font-size: 16px;
+            width: 64px;
+            height: 64px;
+            background-color: #000000; 
+            border: 10px solid #ebdbb2; 
+            font-size: 1.5em;
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -40,16 +39,16 @@
         }
         @media (max-width: 768px) {
             #nextBtn {
-                width: 70px;
-                height: 70px;
-                font-size: 20px;
+                width: 12%;
+                height: 12%;
+                font-size: 2em;
             }
         }
     </style>
 </head>
 <body>
 
-<button id="nextBtn">▶</button>
+<button id="nextBtn"></button>
 <div id="playerContainer"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
@@ -57,7 +56,6 @@
     const streams = [
         '/cam/tvpi/index.m3u8',
         '/cam/carpi/index.m3u8'
-        // add more stream URLs here
     ];
 
     const container = document.getElementById('playerContainer');
