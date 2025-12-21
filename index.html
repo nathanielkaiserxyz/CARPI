@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>TVPi Streams</title>
+    <title>TVPI</title>
     <style>
         html, body {
             margin: 0;
@@ -37,6 +37,18 @@
             align-items: center;
             justify-content: center;
         }
+        #status {
+            position: fixed;
+            bottom: 2%;
+            left: 2%;
+            color: #ebdbb2;
+            font-family: monospace;
+            font-size: 12px;
+            z-index: 10;
+            background: rgba(0,0,0,0.7);
+            padding: 8px;
+            display: none;
+        }
         @media (max-width: 768px) {
             #nextBtn {
                 width: 12%;
@@ -47,48 +59,117 @@
     </style>
 </head>
 <body>
-
 <button id="nextBtn"></button>
+<div id="status"></div>
 <div id="playerContainer"></div>
-
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 <script>
     const streams = [
         '/cam/tvpi/index.m3u8',
         '/cam/carpi/index.m3u8'
     ];
-
     const container = document.getElementById('playerContainer');
+    const statusEl = document.getElementById('status');
     let current = 0;
     const players = [];
 
-    streams.forEach((src, i) => {
+    function log(msg) {
+        console.log(msg);
+        statusEl.textContent = msg;
+        statusEl.style.display = 'block';
+        setTimeout(() => statusEl.style.display = 'none', 3000);
+    }
+
+    function setupPlayer(src, i) {
         const video = document.createElement('video');
         video.autoplay = true;
         video.muted = true;
         video.playsInline = true;
         video.controls = false;
         video.style.display = i === 0 ? 'block' : 'none';
-
         container.appendChild(video);
 
         if (Hls.isSupported()) {
-            const hls = new Hls({ lowLatencyMode: true });
+            const hls = new Hls({ 
+                lowLatencyMode: true,
+                enableWorker: true,
+                maxLoadingDelay: 4,
+                maxBufferLength: 30,
+                maxMaxBufferLength: 600
+            });
+
+            hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                log(`Stream ${i + 1} loaded`);
+                video.play().catch(e => {
+                    log(`Playback failed: ${e.message}`);
+                    // Try unmuting and replaying on user interaction
+                    document.addEventListener('click', () => {
+                        video.muted = false;
+                        video.play().catch(err => log(`Retry failed: ${err.message}`));
+                    }, { once: true });
+                });
+            });
+
+            hls.on(Hls.Events.ERROR, (event, data) => {
+                if (data.fatal) {
+                    switch(data.type) {
+                        case Hls.ErrorTypes.NETWORK_ERROR:
+                            log(`Network error, retrying stream ${i + 1}...`);
+                            setTimeout(() => hls.startLoad(), 1000);
+                            break;
+                        case Hls.ErrorTypes.MEDIA_ERROR:
+                            log(`Media error, recovering stream ${i + 1}...`);
+                            hls.recoverMediaError();
+                            break;
+                        default:
+                            log(`Fatal error stream ${i + 1}`);
+                            break;
+                    }
+                }
+            });
+
             hls.loadSource(src);
             hls.attachMedia(video);
             players.push({ video, hls });
-        } else {
+        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            // Native HLS support (Safari)
             video.src = src;
+            video.addEventListener('loadedmetadata', () => {
+                log(`Stream ${i + 1} loaded (native)`);
+                video.play().catch(e => log(`Playback failed: ${e.message}`));
+            });
             players.push({ video, hls: null });
+        } else {
+            log('HLS not supported');
         }
-    });
+    }
 
+    // Initialize all streams
+    streams.forEach((src, i) => setupPlayer(src, i));
+
+    // Switch streams
     document.getElementById('nextBtn').onclick = () => {
         players[current].video.style.display = 'none';
         current = (current + 1) % players.length;
         players[current].video.style.display = 'block';
+        
+        // Ensure the newly visible video is playing
+        const currentPlayer = players[current];
+        if (currentPlayer.video.paused) {
+            currentPlayer.video.play().catch(e => log(`Play failed: ${e.message}`));
+        }
+        
+        log(`Switched to stream ${current + 1}`);
     };
-</script>
 
+    // Try to start playback on any user interaction
+    document.addEventListener('click', () => {
+        players.forEach(p => {
+            if (p.video.paused && p.video.style.display === 'block') {
+                p.video.play().catch(() => {});
+            }
+        });
+    }, { once: true });
+</script>
 </body>
 </html>
