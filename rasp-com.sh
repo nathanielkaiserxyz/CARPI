@@ -1,13 +1,12 @@
 #!/bin/sh
 set -e
-
 exec rpicam-vid -t 0 -n \
   --width 640 --height 480 \
   --framerate 30 \
   --codec h264 \
   --bitrate 1500000 \
   --profile baseline \
-  --inline \
+  --intra 30 \
   -o - | \
 ffmpeg -re -f h264 -i - \
   -c copy -rtsp_transport tcp \

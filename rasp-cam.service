@@ -5,7 +5,7 @@ Wants=network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/local/bin/cam-rtsp.sh
+ExecStart=/usr/local/bin/rasp-cam.sh
 Restart=always
 RestartSec=2
 KillMode=control-group
